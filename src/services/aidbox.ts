@@ -1,4 +1,4 @@
-import type { Bundle, FHIRResourceMap } from '../types';
+import type { Bundle, ResourceTypeMap } from '../types/fhir';
 
 const AIDBOX_BASE_URL = 'http://localhost:8080';
 
@@ -26,19 +26,49 @@ class AidboxService {
     return response.json();
   }
 
-  async search<T extends keyof FHIRResourceMap>(
+  async search<T extends keyof ResourceTypeMap>(
     resourceType: T,
     params?: Record<string, string>
-  ): Promise<Bundle<FHIRResourceMap[T]>> {
+  ): Promise<Bundle<ResourceTypeMap[T]>> {
     const searchParams = new URLSearchParams(params);
-    return this.request<Bundle<FHIRResourceMap[T]>>(`/fhir/${resourceType}?${searchParams}`);
+    return this.request<Bundle<ResourceTypeMap[T]>>(`/fhir/${resourceType}?${searchParams}`);
   }
 
-  async read<T extends keyof FHIRResourceMap>(
+  async read<T extends keyof ResourceTypeMap>(
     resourceType: T,
     id: string
-  ): Promise<FHIRResourceMap[T]> {
-    return this.request<FHIRResourceMap[T]>(`/fhir/${resourceType}/${id}`);
+  ): Promise<ResourceTypeMap[T]> {
+    return this.request<ResourceTypeMap[T]>(`/fhir/${resourceType}/${id}`);
+  }
+
+  async create<T extends keyof ResourceTypeMap>(
+    resourceType: T,
+    resource: ResourceTypeMap[T]
+  ): Promise<ResourceTypeMap[T]> {
+    return this.request<ResourceTypeMap[T]>(`/fhir/${resourceType}`, {
+      method: 'POST',
+      body: JSON.stringify(resource),
+    });
+  }
+
+  async update<T extends keyof ResourceTypeMap>(
+    resourceType: T,
+    id: string,
+    resource: ResourceTypeMap[T]
+  ): Promise<ResourceTypeMap[T]> {
+    return this.request<ResourceTypeMap[T]>(`/fhir/${resourceType}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(resource),
+    });
+  }
+
+  async delete<T extends keyof ResourceTypeMap>(
+    resourceType: T,
+    id: string
+  ): Promise<void> {
+    await this.request<void>(`/fhir/${resourceType}/${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 

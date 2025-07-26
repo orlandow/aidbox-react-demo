@@ -15,7 +15,7 @@ services:
       POSTGRES_DB: aidbox
       POSTGRES_PASSWORD: irpWedSNKI
   aidbox:
-    image: healthsamurai/aidboxone:stable
+    image: healthsamurai/aidboxone:edge
     pull_policy: always
     depends_on:
     - postgres
@@ -23,7 +23,7 @@ services:
     - 8080:8080
     environment:
       BOX_ADMIN_PASSWORD: 7Q2GEUYp7e
-      BOX_BOOTSTRAP_FHIR_PACKAGES: hl7.fhir.r4.core#4.0.1
+      BOX_BOOTSTRAP_FHIR_PACKAGES: hl7.fhir.r4.core#4.0.1:hl7.terminology.r4#6.4.0
       BOX_COMPATIBILITY_VALIDATION_JSON__SCHEMA_REGEX: '#{:fhir-datetime}'
       BOX_DB_DATABASE: aidbox
       BOX_DB_HOST: postgres
@@ -46,6 +46,8 @@ services:
       BOX_SETTINGS_MODE: read-write
       BOX_WEB_BASE_URL: http://localhost:8080
       BOX_WEB_PORT: 8080
+      FHIR_TERMINOLOGY_ENGINE_HYBRID_EXTERNAL_TX_SERVER: http://tx.health-samurai.io/fhir
+      FHIR_TERMINOLOGY_ENGINE: hybrid
     healthcheck:
       test: curl -f http://localhost:8080/health || exit 1
       interval: 5s
