@@ -5,6 +5,7 @@
 import type { BackboneElement } from './BackboneElement';
 import type { CodeableConcept } from './CodeableConcept';
 import type { DomainResource } from './DomainResource';
+import type { Element } from './Element';
 import type { Identifier } from './Identifier';
 import type { Period } from './Period';
 import type { Reference } from './Reference';

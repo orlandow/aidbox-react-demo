@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { PlayIcon } from '@heroicons/react/24/outline';
 import type { Patient } from '../types/fhir';
-import { usePatient, useDeletePatient } from '../hooks/api';
+import { usePatient, useDeletePatient, useCreateEncounter, useActiveEncountersForPatient } from '../hooks/api';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { stringifyPatient } from '../utils/stringify';
 
@@ -13,6 +14,8 @@ export default function PatientDetail() {
 
   const { data: patient, isLoading: loading, error } = usePatient(id);
   const deletePatientMutation = useDeletePatient();
+  const createEncounterMutation = useCreateEncounter();
+  const { data: activeEncounters = [] } = useActiveEncountersForPatient(id || '');
 
 
   const formatGender = (gender?: Patient['gender']): string => {
@@ -96,6 +99,20 @@ export default function PatientDetail() {
       setIsDeleteDialogOpen(false);
     }
   };
+
+  const handleStartEncounter = async () => {
+    if (!patient) return;
+
+    try {
+      await createEncounterMutation.mutateAsync({
+        patient
+      });
+    } catch (error) {
+      console.error('Error starting encounter:', error);
+    }
+  };
+
+  const hasActiveEncounter = activeEncounters.length > 0;
 
   if (loading) {
     return (
@@ -218,6 +235,17 @@ export default function PatientDetail() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
+              {!hasActiveEncounter && (
+                <button
+                  type="button"
+                  onClick={handleStartEncounter}
+                  disabled={createEncounterMutation.isPending}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                >
+                  <PlayIcon className="-ml-1 mr-2 h-4 w-4" />
+                  {createEncounterMutation.isPending ? 'Starting...' : 'Start Encounter'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleEdit}

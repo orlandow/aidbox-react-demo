@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import type { Patient } from '../types/fhir';
+import { useValueSetExpand, ValueSetUrls } from '../hooks/api';
 
 interface PatientFormData {
   firstName: string;
   lastName: string;
-  gender: 'male' | 'female' | 'other' | 'unknown';
+  gender: string; // Dynamic from FHIR terminology
   birthDate: string;
   phone: string;
   email: string;
@@ -20,13 +21,17 @@ interface PatientFormProps {
 }
 
 export default function PatientForm({ onSubmit, onCancel, loading = false, isEditing = false, initialData }: PatientFormProps) {
+  // Terminology hooks
+  const { data: genderOptions = [], isLoading: genderLoading, error: genderError } = useValueSetExpand(ValueSetUrls.ADMINISTRATIVE_GENDER);
+  const { data: languageOptions = [], isLoading: languageLoading, error: languageError } = useValueSetExpand(ValueSetUrls.LANGUAGES, { count: 20 });
+
   // Helper function to convert Patient to form data
   const patientToFormData = (patient?: Patient): PatientFormData => {
     if (!patient) {
       return {
         firstName: '',
         lastName: '',
-        gender: 'unknown',
+        gender: '',
         birthDate: '',
         phone: '',
         email: '',
@@ -42,7 +47,7 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
     return {
       firstName: name?.given?.[0] || '',
       lastName: name?.family || '',
-      gender: patient.gender || 'unknown',
+      gender: patient.gender || '',
       birthDate: patient.birthDate || '',
       phone,
       email,
@@ -184,17 +189,27 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
           <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
             Gender
           </label>
-          <select
-            id="gender"
-            value={formData.gender}
-            onChange={(e) => handleInputChange('gender', e.target.value as PatientFormData['gender'])}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          >
-            <option value="unknown">Unknown</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
+          {genderError ? (
+            <div className="mt-1 text-sm text-red-600">Error loading gender options: {genderError.message}</div>
+          ) : (
+            <select
+              id="gender"
+              value={formData.gender}
+              onChange={(e) => handleInputChange('gender', e.target.value)}
+              disabled={genderLoading}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:opacity-50"
+            >
+              {genderLoading ? (
+                <option>Loading...</option>
+              ) : (
+                genderOptions.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.display || option.code}
+                  </option>
+                ))
+              )}
+            </select>
+          )}
         </div>
 
         <div>
@@ -250,18 +265,27 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
           <label htmlFor="language" className="block text-sm font-medium text-gray-700">
             Preferred Language
           </label>
-          <select
-            id="language"
-            value={formData.language}
-            onChange={(e) => handleInputChange('language', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          >
-            <option value="en">English</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="zh">Chinese</option>
-          </select>
+          {languageError ? (
+            <div className="mt-1 text-sm text-red-600">Error loading language options: {languageError.message}</div>
+          ) : (
+            <select
+              id="language"
+              value={formData.language}
+              onChange={(e) => handleInputChange('language', e.target.value)}
+              disabled={languageLoading}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:opacity-50"
+            >
+              {languageLoading ? (
+                <option>Loading...</option>
+              ) : (
+                languageOptions.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.display || option.code}
+                  </option>
+                ))
+              )}
+            </select>
+          )}
         </div>
       </div>
 
@@ -275,7 +299,7 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
         </button>
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || genderLoading || languageLoading}
           className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
         >
           {loading ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Patient' : 'Create Patient')}

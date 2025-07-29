@@ -30,7 +30,7 @@ Simple Intake App where we'll manage patients and encounters. Capture vitals and
 
 ## Dev
 
-- Use playwright MCP for UI testing
+- Use the @web-ui-tester subagent for UI testing
 - Use tmux for launching dev servers without hanging, like: `tmux new-session -d -s dev-server 'npm run dev'` 
 - You can keep the tmux session and the playwright browser open from task to task, you don't have to kill it
 

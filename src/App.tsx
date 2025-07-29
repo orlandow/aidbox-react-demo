@@ -6,6 +6,7 @@ import PatientForm from './pages/PatientForm';
 import PatientDetail from './pages/PatientDetail';
 import PatientEdit from './pages/PatientEdit';
 import Calendar from './pages/Calendar';
+import Encounter from './pages/Encounter';
 import { ToastProvider } from './contexts/ToastContext';
 import ToastContainer from './components/ToastContainer';
 
@@ -21,6 +22,7 @@ function App() {
             <Route path="patients/:id" element={<PatientDetail />} />
             <Route path="patients/:id/edit" element={<PatientEdit />} />
             <Route path="calendar" element={<Calendar />} />
+            <Route path="encounter/:id" element={<Encounter />} />
           </Route>
         </Routes>
         <ToastContainer />

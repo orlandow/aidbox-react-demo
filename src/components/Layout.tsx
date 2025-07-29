@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import ActiveEncounterBanner from './ActiveEncounterBanner';
 
 const navigation = [
   { name: 'Dashboard', href: '/' },
@@ -41,6 +42,8 @@ export default function Layout() {
           </div>
         </div>
       </div>
+      
+      <ActiveEncounterBanner />
       
       <main>
         <Outlet />

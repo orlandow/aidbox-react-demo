@@ -7,6 +7,7 @@ import { usePatientSearch } from '../hooks/api';
 export default function Patients() {
   const {
     patients,
+    appointments,
     loading,
     error,
     pagination,
@@ -61,6 +62,7 @@ export default function Patients() {
         />
         <PatientList 
           patients={patients} 
+          appointments={appointments}
           loading={loading}
           searchQuery={filters.query}
         />

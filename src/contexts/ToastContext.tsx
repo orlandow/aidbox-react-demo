@@ -12,6 +12,7 @@ interface ToastContextType {
   toasts: Toast[];
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
+  showToast: (title: string, type: 'success' | 'error' | 'info', message?: string) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -48,8 +49,12 @@ export function ToastProvider({ children }: ToastProviderProps) {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
+  const showToast = (title: string, type: 'success' | 'error' | 'info', message?: string) => {
+    addToast({ title, type, message });
+  };
+
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <ToastContext.Provider value={{ toasts, addToast, removeToast, showToast }}>
       {children}
     </ToastContext.Provider>
   );

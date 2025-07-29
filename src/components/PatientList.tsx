@@ -1,14 +1,17 @@
 import { useNavigate } from 'react-router-dom';
-import type { Patient } from '../types/fhir';
+import type { Patient, Appointment } from '../types/fhir';
+import { stringifyPatient, stringifyDemographics } from '../utils/stringify';
+import AppointmentIndicator from './AppointmentIndicator';
 
 interface PatientListProps {
   patients: Patient[];
+  appointments: Map<string, Appointment[]>;
   loading: boolean;
   searchQuery?: string;
   emptyMessage?: string;
 }
 
-export default function PatientList({ patients, loading, searchQuery = '', emptyMessage }: PatientListProps) {
+export default function PatientList({ patients, appointments, loading, searchQuery = '', emptyMessage }: PatientListProps) {
   const navigate = useNavigate();
 
   const handleRowClick = (patientId: string) => {
@@ -62,37 +65,6 @@ export default function PatientList({ patients, loading, searchQuery = '', empty
     );
   }
 
-  const formatName = (patient: Patient): string => {
-    const name = patient.name?.[0];
-    if (!name) return 'Unknown';
-    
-    const firstName = name.given?.[0] || '';
-    const lastName = name.family || '';
-    return `${firstName} ${lastName}`.trim() || 'Unknown';
-  };
-
-  const formatGender = (gender?: Patient['gender']): string => {
-    if (!gender || gender === 'unknown') return '';
-    return gender.charAt(0).toUpperCase() + gender.slice(1);
-  };
-
-  const calculateAge = (birthDate?: string): string => {
-    if (!birthDate) return '';
-    try {
-      const birth = new Date(birthDate);
-      const today = new Date();
-      let age = today.getFullYear() - birth.getFullYear();
-      const monthDiff = today.getMonth() - birth.getMonth();
-      
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-        age--;
-      }
-      
-      return `${age}yo`;
-    } catch {
-      return '';
-    }
-  };
 
   const getContactInfo = (patient: Patient) => {
     const phone = patient.telecom?.find(t => t.system === 'phone')?.value;
@@ -130,8 +102,8 @@ export default function PatientList({ patients, loading, searchQuery = '', empty
     <ul className="divide-y divide-gray-200">
       {patients.map((patient) => {
         const { phone, email } = getContactInfo(patient);
-        const age = calculateAge(patient.birthDate);
-        const gender = formatGender(patient.gender);
+        const demographics = stringifyDemographics(patient);
+        const patientAppointments = appointments.get(patient.id!) || [];
         
         return (
           <li key={patient.id}>
@@ -139,48 +111,50 @@ export default function PatientList({ patients, loading, searchQuery = '', empty
               className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors duration-150"
               onClick={() => handleRowClick(patient.id!)}
             >
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="bg-indigo-100 rounded-full h-10 w-10 flex items-center justify-center">
-                    <span className="text-sm font-medium text-indigo-700">
-                      {getInitials(patient)}
-                    </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className="bg-indigo-100 rounded-full h-10 w-10 flex items-center justify-center">
+                      <span className="text-sm font-medium text-indigo-700">
+                        {getInitials(patient)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="ml-4">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm font-medium text-gray-900">
+                        {highlightMatch(stringifyPatient(patient), searchQuery)}
+                      </p>
+                      {demographics && (
+                        <span className="text-sm text-gray-500">{demographics}</span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <span>
+                          {phone ? highlightMatch(phone, searchQuery) : (
+                            <span className="text-gray-400 italic">No phone</span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span>
+                          {email ? highlightMatch(email, searchQuery) : (
+                            <span className="text-gray-400 italic">No email</span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="ml-4">
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm font-medium text-gray-900">
-                      {highlightMatch(formatName(patient), searchQuery)}
-                    </p>
-                    {age && (
-                      <span className="text-sm text-gray-500">{age}</span>
-                    )}
-                    {gender && (
-                      <span className="text-sm text-gray-500">{gender}</span>
-                    )}
-                  </div>
-                  <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      <span>
-                        {phone ? highlightMatch(phone, searchQuery) : (
-                          <span className="text-gray-400 italic">No phone</span>
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <svg className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <span>
-                        {email ? highlightMatch(email, searchQuery) : (
-                          <span className="text-gray-400 italic">No email</span>
-                        )}
-                      </span>
-                    </div>
-                  </div>
+                <div className="flex-shrink-0">
+                  <AppointmentIndicator appointments={patientAppointments} />
                 </div>
               </div>
             </div>

@@ -390,6 +390,7 @@ export type ResourceTypeMap =  {
     Definition: Definition;
     FiveWs: FiveWs;
 }
+export type { OperationResultMap, OperationName } from './operations';
 export type ResourceType = keyof ResourceTypeMap;
 export const resourceList: readonly ResourceType[] = [
     'Age', 

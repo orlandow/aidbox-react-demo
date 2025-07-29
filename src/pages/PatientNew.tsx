@@ -1,9 +1,12 @@
-export default function PatientIntake() {
+import { useValueSetExpand, ValueSetUrls } from '../hooks/api';
+
+export default function PatientNew() {
+  const { data: genderOptions = [], isLoading: genderLoading, error: genderError } = useValueSetExpand(ValueSetUrls.ADMINISTRATIVE_GENDER);
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Patient Intake</h1>
-        <p className="text-gray-600 mt-2">Register a new patient and start their visit</p>
+        <h1 className="text-3xl font-bold text-gray-900">New Patient</h1>
+        <p className="text-gray-600 mt-2">Create a new patient record</p>
       </div>
       
       <div className="bg-white shadow rounded-lg p-6">
@@ -50,17 +53,29 @@ export default function PatientIntake() {
             <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
               Gender
             </label>
-            <select
-              id="gender"
-              name="gender"
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            >
-              <option value="">Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-              <option value="unknown">Unknown</option>
-            </select>
+            {genderError ? (
+              <div className="mt-1 text-sm text-red-600">Error loading gender options: {genderError.message}</div>
+            ) : (
+              <select
+                id="gender"
+                name="gender"
+                disabled={genderLoading}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50"
+              >
+                {genderLoading ? (
+                  <option>Loading...</option>
+                ) : (
+                  <>
+                    <option value="">Select gender</option>
+                    {genderOptions.map((option) => (
+                      <option key={option.code} value={option.code}>
+                        {option.display || option.code}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+            )}
           </div>
 
           <div>
@@ -99,7 +114,7 @@ export default function PatientIntake() {
                 type="submit"
                 className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                Register Patient
+                Create Patient
               </button>
             </div>
           </div>

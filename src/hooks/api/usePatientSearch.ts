@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import aidbox from '../../services/aidbox';
 import { queryKeys } from './queryKeys';
 import { useDebounce } from '../useDebounce';
-import type { Patient, Bundle } from '../../types/fhir';
+import type { Patient, Bundle, Appointment } from '../../types/fhir';
 
 interface SearchFilters extends Record<string, unknown> {
   query: string;
@@ -25,6 +25,7 @@ interface PaginationInfo {
 
 interface SearchResult {
   patients: Patient[];
+  appointments: Map<string, Appointment[]>;
   loading: boolean;
   error: string | null;
   pagination: PaginationInfo;
@@ -39,6 +40,7 @@ const buildSearchParams = (filters: SearchFilters) => {
   const params: Record<string, string> = {
     _count: '20',
     page: filters.page.toString(),
+    _revinclude: 'Appointment:patient',
   };
 
   if (filters.query.trim()) {
@@ -61,7 +63,7 @@ const parseLinks = (bundle: Bundle<Patient>) => {
 
   return {
     nextUrl: linkMap.next,
-    prevUrl: linkMap.prev,
+    prevUrl: linkMap.previous,
     firstUrl: linkMap.first,
     lastUrl: linkMap.last,
   };
@@ -85,7 +87,43 @@ export function usePatientSearch(): SearchResult {
       const params = buildSearchParams({ query: debouncedQuery, showInactive, page });
       const result = await aidbox.search('Patient', params);
       
-      const patients = result.entry?.map(entry => entry.resource!) || [];
+      // Separate patients and appointments from bundle entries
+      const patientEntries = result.entry?.filter(entry => 
+        entry.resource?.resourceType === 'Patient' && entry.search?.mode === 'match'
+      ) || [];
+      
+      const appointmentEntries = result.entry?.filter(entry => 
+        entry.resource?.resourceType === 'Appointment' && entry.search?.mode === 'include'
+      ) || [];
+      
+      // Parse appointments and group by patient
+      const appointmentsByPatient = new Map<string, Appointment[]>();
+      appointmentEntries.forEach(entry => {
+        const appointment = entry.resource as Appointment;
+        const patientRef = appointment.participant?.find(p => 
+          p.actor?.reference?.startsWith('Patient/')
+        )?.actor?.reference?.replace('Patient/', '');
+        
+        if (patientRef) {
+          if (!appointmentsByPatient.has(patientRef)) {
+            appointmentsByPatient.set(patientRef, []);
+          }
+          appointmentsByPatient.get(patientRef)!.push(appointment);
+        }
+      });
+      
+      // Filter appointments to only future ones and sort by date
+      const now = new Date();
+      appointmentsByPatient.forEach((appointments, patientId) => {
+        const futureAppointments = appointments
+          .filter(apt => apt.start && new Date(apt.start) > now)
+          .sort((a, b) => new Date(a.start!).getTime() - new Date(b.start!).getTime());
+        appointmentsByPatient.set(patientId, futureAppointments);
+      });
+      
+      // Extract patients
+      const patients: Patient[] = patientEntries.map(entry => entry.resource as Patient);
+      
       const links = parseLinks(result);
       
       const pagination: PaginationInfo = {
@@ -97,13 +135,14 @@ export function usePatientSearch(): SearchResult {
         ...links,
       };
 
-      return { patients, pagination };
+      return { patients, appointments: appointmentsByPatient, pagination };
     },
     staleTime: 30 * 1000, // 30 seconds for search results
     gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
   });
 
   const patients = data?.patients || [];
+  const appointments = data?.appointments || new Map();
   const pagination = data?.pagination || {
     current: 1,
     total: 0,
@@ -150,6 +189,7 @@ export function usePatientSearch(): SearchResult {
 
   return {
     patients,
+    appointments,
     loading: isLoading,
     error: error?.message || null,
     pagination,

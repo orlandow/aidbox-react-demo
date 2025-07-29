@@ -27,6 +27,8 @@ export default function PatientPagination({
 
   const startItem = (current - 1) * count + 1;
   const endItem = Math.min(current * count, total);
+  const totalPages = Math.ceil(total / count);
+  const isLastPage = current === totalPages;
 
   return (
     <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
@@ -62,7 +64,7 @@ export default function PatientPagination({
             {/* First */}
             <button
               onClick={() => firstUrl && onPageChange(firstUrl)}
-              disabled={!hasPrev || loading}
+              disabled={current === 1 || loading}
               className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="sr-only">First</span>
@@ -115,7 +117,7 @@ export default function PatientPagination({
             {/* Last */}
             <button
               onClick={() => lastUrl && onPageChange(lastUrl)}
-              disabled={!hasNext || loading}
+              disabled={isLastPage || loading}
               className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="sr-only">Last</span>
