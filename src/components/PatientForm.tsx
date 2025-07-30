@@ -35,14 +35,14 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
         birthDate: '',
         phone: '',
         email: '',
-        language: 'en'
+        language: ''
       };
     }
 
     const name = patient.name?.[0];
     const phone = patient.telecom?.find(t => t.system === 'phone')?.value || '';
     const email = patient.telecom?.find(t => t.system === 'email')?.value || '';
-    const language = patient.communication?.[0]?.language?.text || 'en';
+    const language = patient.communication?.[0]?.language?.text || '';
 
     return {
       firstName: name?.given?.[0] || '',
@@ -69,6 +69,9 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
     }
     if (!formData.lastName.trim()) {
       newErrors.lastName = 'Last name is required';
+    }
+    if (!formData.gender) {
+      newErrors.gender = 'Gender is required';
     }
     if (!formData.birthDate) {
       newErrors.birthDate = 'Birth date is required';
@@ -127,7 +130,7 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
     }
 
     // Only add communication if we have language
-    if (formData.language && formData.language !== 'en') {
+    if (formData.language) {
       patient.communication = [{
         language: {
           text: formData.language
@@ -187,7 +190,7 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
 
         <div>
           <label htmlFor="gender" className="block text-sm font-medium text-gray-700">
-            Gender
+            Gender *
           </label>
           {genderError ? (
             <div className="mt-1 text-sm text-red-600">Error loading gender options: {genderError.message}</div>
@@ -197,18 +200,26 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
               value={formData.gender}
               onChange={(e) => handleInputChange('gender', e.target.value)}
               disabled={genderLoading}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:opacity-50"
+              className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:opacity-50 ${
+                errors.gender ? 'border-red-300' : ''
+              }`}
             >
               {genderLoading ? (
                 <option>Loading...</option>
               ) : (
-                genderOptions.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.display || option.code}
-                  </option>
-                ))
+                <>
+                  <option value="">Select gender *</option>
+                  {genderOptions.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.display || option.code}
+                    </option>
+                  ))}
+                </>
               )}
             </select>
+          )}
+          {errors.gender && (
+            <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
           )}
         </div>
 
@@ -278,11 +289,14 @@ export default function PatientForm({ onSubmit, onCancel, loading = false, isEdi
               {languageLoading ? (
                 <option>Loading...</option>
               ) : (
-                languageOptions.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.display || option.code}
-                  </option>
-                ))
+                <>
+                  <option value="">Select language (optional)</option>
+                  {languageOptions.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.display || option.code}
+                    </option>
+                  ))}
+                </>
               )}
             </select>
           )}

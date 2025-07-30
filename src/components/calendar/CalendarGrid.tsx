@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { getWeekDays } from '../../utils/calendar';
+import { getAppointmentColor } from '../../utils/colors';
 import type { WeekDay, TimeSlot } from '../../types/calendar';
 import type { Appointment } from '../../types/fhir/Appointment';
 import type { Encounter } from '../../types/fhir/Encounter';
@@ -26,54 +27,20 @@ interface AppointmentBlockProps {
 
 function AppointmentBlock({ appointment, encounters, onClick }: AppointmentBlockProps) {
   const getTypeColor = (appointment: Appointment) => {
-    const code = appointment.appointmentType?.coding?.[0]?.code || '';
-    const display = appointment.appointmentType?.text || 
-                   appointment.appointmentType?.coding?.[0]?.display || 
-                   '';
-    
-    // Check FHIR codes first, then fallback to display text matching
-    switch (code.toUpperCase()) {
-      case 'EMERGENCY':
-        return 'bg-red-100 border-red-300 text-red-800';
-      case 'CHECKUP':
-      case 'ROUTINE':
+    const color = getAppointmentColor(appointment);
+    switch (color) {
+      case 'blue':
         return 'bg-blue-100 border-blue-300 text-blue-800';
-      case 'FOLLOWUP':
+      case 'red':
+        return 'bg-red-100 border-red-300 text-red-800';
+      case 'green':
         return 'bg-green-100 border-green-300 text-green-800';
-      case 'WALKIN':
-        return 'bg-yellow-100 border-yellow-300 text-yellow-800';
+      case 'purple':
+        return 'bg-purple-100 border-purple-300 text-purple-800';
       default:
-        // Fallback to display text matching for backwards compatibility
-        switch (display.toLowerCase()) {
-          case 'emergency':
-          case 'emergency appointment':
-            return 'bg-red-100 border-red-300 text-red-800';
-          case 'checkup':
-          case 'routine':
-          case 'routine appointment':
-          case 'routine appointment - default if not valued':
-            return 'bg-blue-100 border-blue-300 text-blue-800';
-          case 'consultation':
-            return 'bg-purple-100 border-purple-300 text-purple-800';
-          case 'follow-up':
-          case 'followup':
-          case 'follow up visit from a previous appointment':
-          case 'a follow up visit from a previous appointment':
-            return 'bg-green-100 border-green-300 text-green-800';
-          case 'walk-in':
-          case 'walkin':
-          case 'a previously unscheduled walk-in visit':
-            return 'bg-yellow-100 border-yellow-300 text-yellow-800';
-          case 'surgery':
-          case 'procedure':
-            return 'bg-orange-100 border-orange-300 text-orange-800';
-          case 'therapy':
-            return 'bg-teal-100 border-teal-300 text-teal-800';
-          default:
-            return 'bg-gray-100 border-gray-300 text-gray-800';
-        }
+        return 'bg-gray-100 border-gray-300 text-gray-800';
     }
-  };
+  }
 
   const getPatientName = () => {
     const patientParticipant = appointment.participant?.find(
@@ -83,9 +50,22 @@ function AppointmentBlock({ appointment, encounters, onClick }: AppointmentBlock
   };
 
   const getAppointmentType = () => {
-    return appointment.appointmentType?.text || 
-           appointment.appointmentType?.coding?.[0]?.display || 
-           'Appointment';
+    const type = appointment.appointmentType?.coding?.[0]?.code;
+
+    switch (type) {
+      case 'ROUTINE':
+        return 'Routine';
+      case 'EMERGENCY':
+        return 'Emergency';
+      case 'FOLLOWUP':
+        return 'Follow-up';
+      case 'WALKIN':
+        return 'Walk-in';
+      case 'CHECKUP':
+        return 'Check-up';
+      default:
+        return appointment.appointmentType?.text || 'Appointment';
+    }
   };
 
   const getEncounterForAppointment = () => {

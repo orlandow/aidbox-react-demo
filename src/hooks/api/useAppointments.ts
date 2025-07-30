@@ -93,8 +93,8 @@ export function useDeleteAppointment() {
     onSuccess: (_, id) => {
       // Remove from cache
       queryClient.removeQueries({ queryKey: queryKeys.appointments.detail(id) });
-      // Invalidate appointment lists to trigger refetch
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.lists() });
+      // Invalidate all appointment queries to trigger refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
     },
   });
 }

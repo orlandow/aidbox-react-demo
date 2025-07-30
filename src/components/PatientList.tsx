@@ -125,6 +125,11 @@ export default function PatientList({ patients, appointments, loading, searchQue
                       <p className="text-sm font-medium text-gray-900">
                         {highlightMatch(stringifyPatient(patient), searchQuery)}
                       </p>
+                      {patient.active === false && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                          Inactive
+                        </span>
+                      )}
                       {demographics && (
                         <span className="text-sm text-gray-500">{demographics}</span>
                       )}

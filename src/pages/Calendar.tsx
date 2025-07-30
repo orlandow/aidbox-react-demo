@@ -112,12 +112,6 @@ export default function Calendar() {
           
           {/* Navigation */}
           <div className="flex items-center space-x-4">
-            <button
-              onClick={handleToday}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Today
-            </button>
             
             <div className="flex items-center space-x-1">
               <button
@@ -126,7 +120,12 @@ export default function Calendar() {
               >
                 <ChevronLeftIcon className="h-5 w-5" />
               </button>
-              
+              <button
+                onClick={handleToday}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                Today
+              </button>
               <button
                 onClick={handleNextWeek}
                 className="p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md"

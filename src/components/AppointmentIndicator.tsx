@@ -1,5 +1,5 @@
 import type { Appointment } from '../types/fhir/Appointment';
-import { getAppointmentColor, getAppointmentStatusColor, APPOINTMENT_STATUS_COLORS } from '../utils/colors';
+import { getAppointmentColor } from '../utils/colors';
 import { formatRelativeTime } from '../utils/date';
 
 interface AppointmentIndicatorProps {
@@ -29,8 +29,10 @@ export default function AppointmentIndicator({ appointments }: AppointmentIndica
         return 'Emergency';
       case 'FOLLOWUP':
         return 'Follow-up';
-      case 'CONSULTATION':
-        return 'Consultation';
+      case 'WALKIN':
+        return 'Walk-in';
+      case 'CHECKUP':
+        return 'Check-up';
       default:
         return appointmentType?.text || 'Appointment';
     }
@@ -74,7 +76,7 @@ export default function AppointmentIndicator({ appointments }: AppointmentIndica
 
   return (
     <div className="flex items-center" title={tooltipContent}>
-      <div className={`text-center border border-gray-300 border-b-4 ${borderClass} rounded-md bg-white shadow-sm px-3 py-2 w-20`}>
+      <div className={`text-center border border-gray-300 border-b-4 ${borderClass} rounded-md bg-white shadow-sm px-3 py-2 w-24`}>
         <div className="text-lg font-bold text-gray-900">
           {formatAppointmentDate(nextAppointment.start!)}
         </div>
